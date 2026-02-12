@@ -1,12 +1,10 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-import random
 import time
 from pathlib import Path
-import base64
 
-# MUST BE FIRST - Page Config
+# Page Config - MUST BE FIRST
 st.set_page_config(
     page_title="Medanta New Hire Portal",
     page_icon="🏥",
@@ -25,44 +23,29 @@ if 'user' not in st.session_state:
     st.session_state.user = {}
 if 'current_module_idx' not in st.session_state:
     st.session_state.current_module_idx = 0
-if 'assessment_score' not in st.session_state:
-    st.session_state.assessment_score = 0
-if 'answers' not in st.session_state:
-    st.session_state.answers = {}
 
-# CSS
+# Simple CSS
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;600&display=swap');
-
-@keyframes gradientMove {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-}
-
 .main-container {
-    background: linear-gradient(-45deg, #f5f5dc, #e8e4d9, #f0ebe0, #e5e0d5);
-    background-size: 400% 400%;
-    animation: gradientMove 15s ease infinite;
+    background: linear-gradient(135deg, #f5f5dc 0%, #e8e4d9 100%);
     min-height: 100vh;
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    z-index: -2;
+    padding: 20px;
 }
-
-.glass-card {
-    background: rgba(255, 255, 255, 0.75);
-    backdrop-filter: blur(20px);
-    border-radius: 24px;
-    box-shadow: 0 8px 32px rgba(128, 0, 32, 0.1);
-    padding: 40px;
+.title {
+    color: #800020;
+    text-align: center;
+    font-size: 3rem;
+    margin-bottom: 30px;
+}
+.card {
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     margin: 20px 0;
 }
-
-#MainMenu, footer, header {visibility: hidden;}
 </style>
-<div class="main-container"></div>
 """, unsafe_allow_html=True)
 
 # CSV Functions
@@ -74,8 +57,19 @@ def save_user_data(user_data):
             df.to_csv(filename, mode='a', header=False, index=False)
         else:
             df.to_csv(filename, index=False)
-    except Exception as e:
-        st.error(f"Error saving: {e}")
+    except:
+        pass
+
+def save_assessment_result(result_data):
+    try:
+        filename = DATA_DIR / "assessment_results.csv"
+        df = pd.DataFrame([result_data])
+        if filename.exists():
+            df.to_csv(filename, mode='a', header=False, index=False)
+        else:
+            df.to_csv(filename, index=False)
+    except:
+        pass
 
 # Load Questions
 @st.cache_data
@@ -92,21 +86,14 @@ def load_questions():
             }
         return assessments
     except Exception as e:
-        st.error(f"Error loading questions: {e}")
         return {}
 
 questions_data = load_questions()
 
 # Pages
 def show_landing():
-    st.markdown("""
-    <div style="text-align: center; padding: 60px 0;">
-        <h1 style="font-family: Playfair Display; font-size: 4rem; color: #800020; margin-bottom: 20px;">
-            Welcome to Medanta
-        </h1>
-        <p style="font-size: 1.5rem; color: #666; margin-bottom: 40px;">The Medicity</p>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown('<h1 class="title">Welcome to Medanta</h1>', unsafe_allow_html=True)
+    st.markdown('<p style="text-align:center; font-size:1.5rem; color:#666;">The Medicity</p>', unsafe_allow_html=True)
     
     col1, col2, col3 = st.columns([1,2,1])
     with col2:
@@ -117,7 +104,7 @@ def show_landing():
 def show_login():
     col1, col2, col1 = st.columns([1,2,1])
     with col2:
-        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+        st.markdown('<div class="card">', unsafe_allow_html=True)
         st.subheader("Join Medanta Family")
         
         with st.form("login_form"):
@@ -146,38 +133,34 @@ def show_dashboard():
     
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("📚 Employee Handbook", use_container_width=True):
-            st.session_state.page = 'handbook'
-            st.rerun()
-        if st.button("📝 Assessments", use_container_width=True):
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.subheader("📚 Employee Handbook")
+        st.markdown("[Click here to open handbook](https://online.flippingbook.com/view/652486186/)")
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.subheader("📝 Assessments")
+        if st.button("Start Assessment", key="assess"):
             st.session_state.page = 'assessment'
             st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
     
     with col2:
-        if st.button("🏅 JCI Handbook", use_container_width=True):
-            st.session_state.page = 'jci'
-            st.rerun()
-        if st.button("💬 Feedback", use_container_width=True):
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.subheader("🏅 JCI Handbook")
+        st.markdown("[Click here to open JCI handbook](https://online.flippingbook.com/view/389334287/)")
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.subheader("💬 Feedback")
+        if st.button("Give Feedback", key="feedback"):
             st.session_state.page = 'feedback'
             st.rerun()
-
-def show_handbook():
-    st.subheader("Employee Handbook")
-    st.components.v1.iframe("https://online.flippingbook.com/view/652486186/", height=700)
-    if st.button("← Back to Dashboard"):
-        st.session_state.page = 'dashboard'
-        st.rerun()
-
-def show_jci():
-    st.subheader("JCI Handbook")
-    st.components.v1.iframe("https://online.flippingbook.com/view/389334287/", height=700)
-    if st.button("← Back to Dashboard"):
-        st.session_state.page = 'dashboard'
-        st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
 def show_assessment():
     if not questions_data:
-        st.error("⚠️ Could not load questions. Please check Question_bank.xlsx file.")
+        st.error("⚠️ Could not load questions. Check Question_bank.xlsx")
         if st.button("Back"):
             st.session_state.page = 'dashboard'
             st.rerun()
@@ -195,65 +178,62 @@ def show_assessment():
     
     module = questions_data[module_ids[current_idx]]
     st.subheader(f"Module: {module['name']}")
-    st.progress((current_idx / len(module_ids)))
+    st.progress(current_idx / len(module_ids))
     
     correct = 0
     total = len(module['questions'])
     
     for i, q in enumerate(module['questions']):
-        st.markdown(f"**Q{i+1}. {q['Question_Text']}**")
+        st.write(f"**Q{i+1}. {q['Question_Text']}**")
         
         options = []
         for opt in ['Option_A', 'Option_B', 'Option_C', 'Option_D']:
             if pd.notna(q.get(opt)) and str(q.get(opt)).strip():
                 options.append(q[opt])
         
-        ans = st.radio("Select answer:", options, key=f"q_{current_idx}_{i}")
+        ans = st.radio("Select:", options, key=f"q_{current_idx}_{i}")
         
         if ans == q[f"Option_{q['Correct_Option']}"]:
             correct += 1
     
-    if st.button("Submit Module", type="primary"):
+    if st.button("Submit", type="primary"):
         score = (correct / total) * 100
         if score >= 80:
-            st.success(f"✅ Passed! Score: {score:.0f}%")
+            st.success(f"✅ Passed! {score:.0f}%")
+            save_assessment_result({
+                'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                'user': st.session_state.user.get('name'),
+                'module': module['name'],
+                'score': score,
+                'status': 'PASSED'
+            })
             st.session_state.current_module_idx += 1
             time.sleep(2)
             st.rerun()
         else:
-            st.error(f"❌ Failed. Score: {score:.0f}%. Need 80% to pass.")
-            st.info("Click Submit again to retry this module.")
+            st.error(f"❌ Failed. {score:.0f}%. Need 80%")
 
 def show_feedback():
     st.subheader("Training Feedback")
     with st.form("feedback"):
         feedback_text = st.text_area("Your feedback")
         if st.form_submit_button("Submit"):
-            st.success("Thank you for your feedback!")
+            st.success("Thank you!")
             st.session_state.page = 'dashboard'
             st.rerun()
 
-# MAIN ROUTER
-try:
-    page = st.session_state.page
-    
-    if page == 'landing':
-        show_landing()
-    elif page == 'login':
-        show_login()
-    elif page == 'dashboard':
-        show_dashboard()
-    elif page == 'handbook':
-        show_handbook()
-    elif page == 'jci':
-        show_jci()
-    elif page == 'assessment':
-        show_assessment()
-    elif page == 'feedback':
-        show_feedback()
-    else:
-        show_landing()
-        
-except Exception as e:
-    st.error(f"App Error: {str(e)}")
-    st.info("Please refresh the page or contact support.")
+# MAIN
+page = st.session_state.page
+
+if page == 'landing':
+    show_landing()
+elif page == 'login':
+    show_login()
+elif page == 'dashboard':
+    show_dashboard()
+elif page == 'assessment':
+    show_assessment()
+elif page == 'feedback':
+    show_feedback()
+else:
+    show_landing()
